@@ -1,8 +1,7 @@
 # TODO
+- [x] Add “building” image into Part 1 (Strategic Foundation) in `index.html`
+- [x] Add supporting CSS for the new `.part-media` component so it looks great
+- [ ] Quick manual check: open `index.html` and verify responsive layout
 
-- [ ] Remove chatbot widget markup from index.html
-- [ ] Remove chatbot-related CSS from index.html (inline <style>)
-- [ ] Remove chatbot-related JS from index.html (inline <script>)
-- [ ] Verify index.html has no references to: chat-trigger/chat-window/chat-input/SYSTEM_PROMPT/anthropic
-- [ ] Verify page renders and console has no JS errors
+
 
