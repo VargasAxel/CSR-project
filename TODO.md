@@ -1,11 +1,8 @@
-# TODO - Separate HTML / CSS / JS
+# TODO
 
-- [x] 1) Overwrite `phi-resilience.css` with the CSS currently embedded in `PHI_Resilience_Content_Strategy_2026 (1).html`.
-- [x] 2) Overwrite `phi-resilience.js` with the JS currently embedded in `PHI_Resilience_Content_Strategy_2026 (1).html`.
-
-- [x] 3) Update `PHI_Resilience_Content_Strategy_2026 (1).html` to remove inline `<style>` and `<script>` blocks.
-- [x] 4) Add `<link rel="stylesheet" href="phi-resilience.css">` and `<script defer src="phi-resilience.js"></script>` to the HTML.
-
-- [ ] 5) Sanity check: verify progress bar, active sidenav, reveal animations, topic bank rendering, calendar rendering, and chatbot widget toggling/sending.
-
+- [ ] Remove chatbot widget markup from index.html
+- [ ] Remove chatbot-related CSS from index.html (inline <style>)
+- [ ] Remove chatbot-related JS from index.html (inline <script>)
+- [ ] Verify index.html has no references to: chat-trigger/chat-window/chat-input/SYSTEM_PROMPT/anthropic
+- [ ] Verify page renders and console has no JS errors
 
