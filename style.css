@@ -167,6 +167,8 @@ body::before {
   transition: var(--transition);
   position: relative;
   overflow: hidden;
+  border: none;
+  cursor: pointer;
 }
 .btn::after {
   content: '';
@@ -392,6 +394,7 @@ body::before {
   position: relative;
   z-index: 2;
   max-width: 820px;
+  
 }
 
 .hero-eyebrow {
@@ -416,15 +419,16 @@ body::before {
 
 .hero-title {
   font-family: var(--font-serif);
-  font-size: clamp(2.8rem, 7vw, 5.8rem);
-  font-weight: 800;
-  line-height: 1.03;
+  font-size: clamp(1rem, 1.2vw, .5rem); /* reduced size */
+  font-weight: 600;
+  line-height: .8;
   color: var(--white);
   letter-spacing: -.02em;
-  margin-bottom: 2rem;
+  margin-bottom: 1.2rem; /* slightly reduced spacing */
   opacity: 0;
   animation: fadeUp .9s .4s var(--ease-out) forwards;
 }
+
 .hero-title em {
   font-style: italic;
   color: var(--gold);
@@ -1351,6 +1355,13 @@ body::before {
 
 .contact-inner { text-align: center; }
 
+/* Center specific contact eyebrow + section subtitle (handles inline style in HTML) */
+#contact .eyebrow { justify-content: center; }
+#contact .section-subtitle { margin-left: auto; margin-right: auto; text-align: center; }
+
+/* Center the eyebrow heading in Contact section */
+#contact .eyebrow { justify-content: center; }
+
 .contact-tiles {
   display: flex;
   justify-content: center;
@@ -1407,6 +1418,199 @@ body::before {
   transition: color .25s, border-color .25s;
 }
 .c-chip:hover { color: var(--gold); border-color: var(--gold-line); }
+
+/* ── CONSULTATION MODAL ──────────────────────────────────── */
+#consultationModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 8000;
+  opacity: 0;
+  transition: opacity .4s var(--ease-smooth);
+}
+#consultationModal.open {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.modal-content {
+  position: relative;
+  z-index: 1;
+  background: var(--navy-light);
+  border: 1px solid var(--gold-line);
+  border-radius: 8px;
+  max-width: 540px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: auto;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  animation: slideIn .4s var(--ease-out);
+}
+@keyframes slideIn {
+  from { transform: translateY(-30px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.modal-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .25s;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover { color: var(--gold); }
+
+.modal-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.modal-header h2 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: .5rem;
+}
+.modal-header p {
+  font-size: .95rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.consultation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.form-group label {
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: var(--navy-card);
+  border: 1px solid var(--gold-line);
+  border-radius: 4px;
+  padding: .85rem 1rem;
+  font-family: var(--font-sans);
+  font-size: .88rem;
+  color: var(--white);
+  transition: border-color .25s, box-shadow .25s;
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--muted);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 0 3px rgba(201,151,58,.2);
+}
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23c9973a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+}
+
+.form-group.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  margin: .5rem 0;
+}
+.form-group.checkbox input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.form-group.checkbox label {
+  margin: 0;
+  text-transform: none;
+  font-size: .85rem;
+}
+
+.submit-btn {
+  margin-top: .5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.form-note {
+  font-size: .75rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: .5rem;
+}
+
+.modal-success {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+.success-icon {
+  font-size: 3.5rem;
+  color: var(--gold);
+  animation: popIn .5s var(--ease-out);
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.modal-success h3 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--white);
+}
+.modal-success p {
+  font-size: .9rem;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 400px;
+}
+.modal-success .btn {
+  width: 100%;
+}
 
 /* ── FOOTER ──────────────────────────────────────────────── */
 footer {
@@ -1525,6 +1729,9 @@ footer {
 
   /* BV */
   .bv-grid { grid-template-columns: 1fr; }
+
+  /* Modal */
+  .modal-content { max-width: 90vw; padding: 2.5rem 2rem; }
 }
 
 /* ── SM: Tablet portrait / large phone ─────────────────── */
@@ -1626,6 +1833,11 @@ footer {
   .contact-btns  { flex-direction: column; align-items: center; }
   .contact-btns .btn { width: 100%; max-width: 320px; justify-content: center; }
 
+  /* Modal */
+  .modal-content { width: 95vw; max-width: none; padding: 2rem 1.5rem; }
+  .modal-close { top: 1rem; right: 1rem; }
+  .modal-header h2 { font-size: 1.5rem; }
+
   /* Footer */
   footer { flex-direction: column; text-align: center; gap: 1rem; padding: 2rem 1.5rem; }
   .footer-links { flex-wrap: wrap; justify-content: center; gap: 1.25rem; }
@@ -1707,6 +1919,11 @@ footer {
   /* Stat */
   .stat-num { font-size: 2.8rem; }
   .stat-label { font-size: .75rem; }
+
+  /* Modal */
+  .modal-content { padding: 1.75rem 1.25rem; }
+  .modal-header h2 { font-size: 1.4rem; }
+  .consultation-form { gap: 1.25rem; }
 }
 
 /* ── XXS: Tiny phones (≤ 360px) ─────────────────────────── */
@@ -1735,6 +1952,9 @@ footer {
 
   .svc-card { padding: 1.25rem; }
   .mv-card  { padding: 1.25rem; }
+
+  /* Modal */
+  .modal-content { padding: 1.5rem 1rem; }
 }
 
 /* ── TOUCH DEVICES: disable hover tilt ──────────────────── */
@@ -1757,6 +1977,8 @@ footer {
   .hero-glow { animation: none; }
   .hero-scroll-line { animation: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
+  #consultationModal { transition: none; }
+  .modal-content { animation: none; }
 }
 
 /* ── PRINT ───────────────────────────────────────────────── */

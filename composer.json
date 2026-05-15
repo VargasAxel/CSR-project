@@ -1,0 +1,10 @@
+{
+    "name": "phi-resilience/website",
+    "description": "PHI Resilience — consultation form mailer",
+    "require": {
+        "phpmailer/phpmailer": "^6.9"
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
