@@ -1,44 +1,111 @@
 /* ============================================================
-   PHI RESILIENCE — script.js
+   PHI RESILIENCE — script.js (Improved)
    ============================================================ */
 
 'use strict';
 
 /* ── MAILER ENDPOINT ─────────────────────────────────────── */
-// Path to the PHP mailer script relative to your site root.
-// If index.html and send_consultation.php are in the same folder, leave as-is.
 const MAILER_ENDPOINT = './send_consultation.php';
+
+/* ── UTILS ───────────────────────────────────────────────── */
+const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
 /* ── CUSTOM CURSOR ───────────────────────────────────────── */
 (function initCursor() {
+  // Skip on touch-only devices
+  if (window.matchMedia('(hover: none)').matches) return;
+
   const dot  = document.createElement('div');
   const ring = document.createElement('div');
   dot.className  = 'cursor-dot';
   ring.className = 'cursor-ring';
   document.body.append(dot, ring);
 
-  let mx = -100, my = -100, rx = -100, ry = -100;
+  // Raw mouse position
+  let mx = -200, my = -200;
+  // Lerped ring position (follows with lag)
+  let rx = -200, ry = -200;
+  // Lerped dot position (tighter lag)
+  let dx = -200, dy = -200;
 
-  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  let isHovered  = false;
+  let isClicking = false;
+  let rafId      = null;
 
-  function loop() {
-    dot.style.left  = mx + 'px';
-    dot.style.top   = my + 'px';
-    rx += (mx - rx) * .12;
-    ry += (my - ry) * .12;
-    ring.style.left = rx + 'px';
-    ring.style.top  = ry + 'px';
-    requestAnimationFrame(loop);
-  }
-  loop();
-
-  document.querySelectorAll('a, button, .el, .value-card, .svc-card, .why-card').forEach(el => {
-    el.addEventListener('mouseenter', () => ring.classList.add('hovered'));
-    el.addEventListener('mouseleave', () => ring.classList.remove('hovered'));
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
   });
 
-  document.addEventListener('mouseleave', () => { dot.style.opacity = '0'; ring.style.opacity = '0'; });
-  document.addEventListener('mouseenter', () => { dot.style.opacity = '1'; ring.style.opacity = '1'; });
+  document.addEventListener('mousedown', () => {
+    isClicking = true;
+    ring.classList.add('clicking');
+    ring.classList.remove('hovered');
+  });
+  document.addEventListener('mouseup', () => {
+    isClicking = false;
+    ring.classList.remove('clicking');
+    if (isHovered) ring.classList.add('hovered');
+  });
+
+  // Register hoverable targets
+  const registerHoverables = () => {
+    document.querySelectorAll(
+      'a, button, .el, .value-card, .svc-card, .why-card, .mv-card, .ctile, .stat-cell, .about-chip, .c-chip, .exp-tag'
+    ).forEach(el => {
+      if (el.dataset.cursorBound) return;
+      el.dataset.cursorBound = '1';
+      el.addEventListener('mouseenter', () => {
+        isHovered = true;
+        if (!isClicking) ring.classList.add('hovered');
+      });
+      el.addEventListener('mouseleave', () => {
+        isHovered = false;
+        ring.classList.remove('hovered');
+      });
+    });
+  };
+  registerHoverables();
+
+  // Re-register after dynamic content (modal injection)
+  const observer = new MutationObserver(() => registerHoverables());
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity  = '0';
+    ring.style.opacity = '0';
+  });
+  document.addEventListener('mouseenter', () => {
+    dot.style.opacity  = '1';
+    ring.style.opacity = '1';
+  });
+
+  function tick() {
+    // Ring: smooth, slower follow
+    rx = lerp(rx, mx, 0.10);
+    ry = lerp(ry, my, 0.10);
+    // Dot: faster, near-instant
+    dx = lerp(dx, mx, 0.55);
+    dy = lerp(dy, my, 0.55);
+
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    dot.style.left  = dx + 'px';
+    dot.style.top   = dy + 'px';
+
+    rafId = requestAnimationFrame(tick);
+  }
+  tick();
+
+  // Ripple position on buttons
+  document.addEventListener('mousemove', e => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    btn.style.setProperty('--rx', ((e.clientX - r.left) / r.width * 100) + '%');
+    btn.style.setProperty('--ry', ((e.clientY - r.top)  / r.height * 100) + '%');
+  });
 })();
 
 /* ── NAV SCROLL ──────────────────────────────────────────── */
@@ -46,28 +113,84 @@ const MAILER_ENDPOINT = './send_consultation.php';
   const nav  = document.getElementById('nav');
   const hbg  = document.getElementById('hbg');
   const navM = document.getElementById('navM');
+  if (!nav) return;
+
+  let lastScroll = 0;
+  let ticking    = false;
 
   function updateNav() {
-    nav.classList.toggle('scrolled', window.scrollY > 60);
-  }
-  updateNav();
-  window.addEventListener('scroll', updateNav, { passive: true });
+    const y = window.scrollY;
 
-  hbg.addEventListener('click', () => {
-    navM.classList.toggle('open');
-    const spans = hbg.querySelectorAll('span');
-    const open  = navM.classList.contains('open');
-    spans[0].style.transform = open ? 'translateY(6.5px) rotate(45deg)'  : '';
-    spans[1].style.opacity   = open ? '0' : '';
-    spans[2].style.transform = open ? 'translateY(-6.5px) rotate(-45deg)' : '';
-  });
+    nav.classList.toggle('scrolled', y > 60);
+
+    // Auto-hide nav when scrolling down fast, show on up
+    if (Math.abs(y - lastScroll) > 8) {
+      if (y > lastScroll && y > 200) {
+        nav.style.transform = 'translateY(-105%)';
+      } else {
+        nav.style.transform = '';
+      }
+      lastScroll = y;
+    }
+    ticking = false;
+  }
+
+  // Add smooth transition on nav for hide/show
+  nav.style.transition = 'transform .4s cubic-bezier(.4,0,.2,1), background .5s, backdrop-filter .5s, border-color .5s, padding .4s';
+
+  updateNav();
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(updateNav);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Hamburger
+  if (hbg && navM) {
+    hbg.addEventListener('click', () => {
+      const isOpen = navM.classList.toggle('open');
+      const spans  = hbg.querySelectorAll('span');
+      spans[0].style.transform = isOpen ? 'translateY(6.5px) rotate(45deg)'   : '';
+      spans[1].style.opacity   = isOpen ? '0'                                  : '';
+      spans[2].style.transform = isOpen ? 'translateY(-6.5px) rotate(-45deg)' : '';
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+
+    navM.addEventListener('click', e => {
+      if (e.target === navM) closeM();
+    });
+  }
 
   window.closeM = () => {
+    if (!navM) return;
     navM.classList.remove('open');
-    hbg.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+    hbg?.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+    document.body.style.overflow = '';
   };
 
-  navM.addEventListener('click', e => { if (e.target === navM) window.closeM(); });
+  // Close mobile nav on escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && navM?.classList.contains('open')) window.closeM();
+  });
+})();
+
+/* ── SMOOTH ANCHOR SCROLL ────────────────────────────────── */
+(function initSmoothAnchors() {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', e => {
+      const target = document.querySelector(anchor.getAttribute('href'));
+      if (!target) return;
+      e.preventDefault();
+      window.closeM?.();
+
+      // Offset for fixed nav (~70px)
+      const navH = document.getElementById('nav')?.offsetHeight ?? 70;
+      const top  = target.getBoundingClientRect().top + window.scrollY - navH - 12;
+
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+  });
 })();
 
 /* ── SCROLL REVEAL ───────────────────────────────────────── */
@@ -79,14 +202,15 @@ const MAILER_ENDPOINT = './send_consultation.php';
         obs.unobserve(e.target);
       }
     });
-  }, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
+  }, { threshold: .1, rootMargin: '0px 0px -48px 0px' });
 
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 })();
 
 /* ── COUNTER ANIMATION ───────────────────────────────────── */
 (function initCounters() {
-  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+  // Smooth ease-out quartic
+  const ease = t => 1 - Math.pow(1 - t, 4);
 
   const obs = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -94,16 +218,18 @@ const MAILER_ENDPOINT = './send_consultation.php';
       const el     = entry.target;
       const target = +el.dataset.target;
       const suffix = el.dataset.suffix || '';
-      const dur    = 1800;
-      const start  = performance.now();
+      const dur    = 1600;
+      let start    = null;
 
-      function tick(now) {
-        const t   = Math.min((now - start) / dur, 1);
-        const val = Math.round(easeOutQuart(t) * target);
-        el.textContent = val + suffix;
+      const tick = ts => {
+        if (!start) start = ts;
+        const t   = clamp((ts - start) / dur, 0, 1);
+        const val = Math.round(ease(t) * target);
+        el.textContent = val.toLocaleString() + suffix;
         if (t < 1) requestAnimationFrame(tick);
-        else el.textContent = target + suffix;
-      }
+        else el.textContent = target.toLocaleString() + suffix;
+      };
+
       requestAnimationFrame(tick);
       obs.unobserve(el);
     });
@@ -153,47 +279,81 @@ const MAILER_ENDPOINT = './send_consultation.php';
   const tip  = document.getElementById('ptTip');
   if (!grid) return;
 
-  elements.forEach(e => {
+  // Tooltip position with edge clamping
+  let tipTx = -500, tipTy = -500;
+  let tipRx = -500, tipRy = -500;
+  let tipRaf = null;
+  let tipVisible = false;
+
+  function animateTip() {
+    tipRx = lerp(tipRx, tipTx, 0.2);
+    tipRy = lerp(tipRy, tipTy, 0.2);
+    tip.style.left = tipRx + 'px';
+    tip.style.top  = tipRy + 'px';
+    if (tipVisible) tipRaf = requestAnimationFrame(animateTip);
+  }
+
+  function showTip(content, cx, cy) {
+    tip.innerHTML = content;
+    tip.classList.add('show');
+    tipVisible = true;
+
+    const maxX = window.innerWidth  - 260;
+    const maxY = window.innerHeight - 130;
+    tipTx = clamp(cx + 16, 8, maxX);
+    tipTy = clamp(cy - 10, 8, maxY);
+
+    cancelAnimationFrame(tipRaf);
+    tipRaf = requestAnimationFrame(animateTip);
+  }
+
+  function hideTip() {
+    tip.classList.remove('show');
+    tipVisible = false;
+    cancelAnimationFrame(tipRaf);
+  }
+
+  elements.forEach((e, i) => {
     const el = document.createElement('div');
     el.className = `el grp-${e.grp}`;
+    el.style.animationDelay = `${i * 0.018}s`;
     el.innerHTML = `
       <div class="el-num">${e.num}</div>
       <div class="el-sym">${e.sym}</div>
       <div class="el-name">${e.name}</div>`;
 
-    const showTip = (cx, cy) => {
-      tip.innerHTML = `<strong>${e.name}</strong><br>${e.desc}<br><small style="color:var(--gold);margin-top:.35rem;display:block">SDG ${e.sdg}</small>`;
-      tip.classList.add('show');
-      const maxX = window.innerWidth  - 260;
-      const maxY = window.innerHeight - 120;
-      tip.style.left = Math.min(Math.max(cx + 14, 8), maxX) + 'px';
-      tip.style.top  = Math.min(cy - 10, maxY) + 'px';
-    };
+    const content = `<strong>${e.name}</strong><br>${e.desc}<br><small style="color:var(--gold);margin-top:.35rem;display:block">SDG ${e.sdg}</small>`;
 
-    el.addEventListener('mousemove', ev => showTip(ev.clientX, ev.clientY));
-    el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    el.addEventListener('mousemove', ev => showTip(content, ev.clientX, ev.clientY));
+    el.addEventListener('mouseleave', hideTip);
 
     el.addEventListener('touchstart', ev => {
       ev.preventDefault();
       const t = ev.touches[0];
-      showTip(t.clientX, t.clientY);
-      setTimeout(() => tip.classList.remove('show'), 2800);
+      showTip(content, t.clientX, t.clientY);
+      setTimeout(hideTip, 3000);
     }, { passive: false });
 
     grid.appendChild(el);
   });
 })();
 
-/* ── SMOOTH PARALLAX HERO PATTERN ────────────────────────── */
+/* ── PARALLAX HERO PATTERN ───────────────────────────────── */
 (function initParallax() {
   const pattern = document.querySelector('.hero-pattern');
+  const glow    = document.querySelector('.hero-glow');
   if (!pattern) return;
 
   let ticking = false;
+  let lastY   = 0;
+
   window.addEventListener('scroll', () => {
+    lastY = window.scrollY;
     if (!ticking) {
       requestAnimationFrame(() => {
-        pattern.style.transform = `translateY(${window.scrollY * .25}px)`;
+        const y = lastY;
+        pattern.style.transform = `translateY(${y * .22}px)`;
+        if (glow) glow.style.transform = `translate(-50%,-50%) translateY(${y * .08}px)`;
         ticking = false;
       });
       ticking = true;
@@ -205,47 +365,188 @@ const MAILER_ENDPOINT = './send_consultation.php';
 (function initActiveNav() {
   const sections = document.querySelectorAll('section[id]');
   const links    = document.querySelectorAll('.nav-links a[href^="#"]');
+  if (!sections.length || !links.length) return;
 
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
-      if (e.isIntersecting) {
-        links.forEach(l => l.classList.remove('active'));
-        const active = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
-        if (active) active.classList.add('active');
-      }
+      if (!e.isIntersecting) return;
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
     });
-  }, { rootMargin: '-40% 0px -55% 0px' });
+  }, { rootMargin: '-35% 0px -60% 0px' });
 
   sections.forEach(s => obs.observe(s));
 })();
 
-/* ── SUBTLE TILT ON HOVER ────────────────────────────────── */
+/* ── 3D TILT ON HOVER ────────────────────────────────────── */
 (function initTilt() {
   if (window.matchMedia('(hover: none)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const INTENSITY = 3.5;
+  const LIFT      = 5;
 
   document.querySelectorAll('.mv-card, .svc-card, .leader-card, .why-card').forEach(card => {
+    let rafId     = null;
+    let targetRX  = 0, targetRY = 0;
+    let currentRX = 0, currentRY = 0;
+
     card.addEventListener('mousemove', e => {
       const rect = card.getBoundingClientRect();
       const dx   = (e.clientX - rect.left - rect.width  / 2) / (rect.width  / 2);
       const dy   = (e.clientY - rect.top  - rect.height / 2) / (rect.height / 2);
-      card.style.transform = `translateY(-4px) rotateX(${-dy * 3}deg) rotateY(${dx * 3}deg)`;
+      targetRX   = -dy * INTENSITY;
+      targetRY   =  dx * INTENSITY;
     });
-    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+
+    function animateTilt() {
+      currentRX = lerp(currentRX, targetRX, 0.12);
+      currentRY = lerp(currentRY, targetRY, 0.12);
+
+      const dist = Math.abs(currentRX - targetRX) + Math.abs(currentRY - targetRY);
+      card.style.transform = `translateY(-${LIFT}px) rotateX(${currentRX}deg) rotateY(${currentRY}deg)`;
+
+      if (dist > 0.01) {
+        rafId = requestAnimationFrame(animateTilt);
+      } else {
+        card.style.transform = `translateY(-${LIFT}px) rotateX(${targetRX}deg) rotateY(${targetRY}deg)`;
+      }
+    }
+
+    card.addEventListener('mouseenter', () => {
+      card.style.transformStyle    = 'preserve-3d';
+      card.style.transition        = 'none';
+      card.style.willChange        = 'transform';
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(animateTilt);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      cancelAnimationFrame(rafId);
+      targetRX = 0;
+      targetRY = 0;
+      // Spring back with CSS transition
+      card.style.transition = 'transform .6s cubic-bezier(.34,1.56,.64,1)';
+      card.style.transform  = '';
+    });
   });
 })();
 
 /* ── PAGE LOAD FADE-IN ───────────────────────────────────── */
 (function initPageLoad() {
-  document.body.style.opacity = '0';
-  document.body.style.transition = 'opacity .5s ease';
+  document.body.style.opacity   = '0';
+  document.body.style.transform = 'translateY(6px)';
+  document.body.style.transition = 'opacity .55s ease, transform .55s cubic-bezier(.22,.68,0,1.2)';
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => { document.body.style.opacity = '1'; });
+    requestAnimationFrame(() => {
+      document.body.style.opacity   = '1';
+      document.body.style.transform = '';
+    });
   });
+})();
+
+/* ── MAGNETIC BUTTONS ────────────────────────────────────── */
+(function initMagneticButtons() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const STRENGTH = 0.28;
+
+  document.querySelectorAll('.btn-gold, .btn-ghost, .nav-links a.nav-cta').forEach(btn => {
+    let rafId = null;
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+
+    btn.addEventListener('mousemove', e => {
+      const r  = btn.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width  / 2);
+      const dy = e.clientY - (r.top  + r.height / 2);
+      tx = dx * STRENGTH;
+      ty = dy * STRENGTH;
+    });
+
+    function animateMagnetic() {
+      cx = lerp(cx, tx, 0.15);
+      cy = lerp(cy, ty, 0.15);
+      const dist = Math.abs(cx - tx) + Math.abs(cy - ty);
+      btn.style.transform = `translate(${cx}px, ${cy}px)`;
+      if (dist > 0.05) rafId = requestAnimationFrame(animateMagnetic);
+    }
+
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transition = 'box-shadow .35s, background-position .5s, opacity .25s, border-color .25s, color .25s';
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(animateMagnetic);
+    });
+
+    btn.addEventListener('mouseleave', () => {
+      cancelAnimationFrame(rafId);
+      tx = 0; ty = 0;
+      btn.style.transition = 'transform .65s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, background-position .5s, opacity .25s, border-color .25s, color .25s';
+      btn.style.transform  = '';
+      requestAnimationFrame(() => {
+        cx = 0; cy = 0;
+      });
+    });
+  });
+})();
+
+/* ── SCROLL PROGRESS INDICATOR ───────────────────────────── */
+(function initScrollProgress() {
+  const bar = document.createElement('div');
+  bar.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+    z-index: 9998;
+    pointer-events: none;
+    transform-origin: left;
+    transition: width .1s linear;
+  `;
+  document.body.appendChild(bar);
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const doc  = document.documentElement;
+        const pct  = (window.scrollY / (doc.scrollHeight - doc.clientHeight)) * 100;
+        bar.style.width = clamp(pct, 0, 100) + '%';
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+})();
+
+/* ── STAGGERED CHILD REVEALS ─────────────────────────────── */
+(function initStaggeredReveal() {
+  // When a grid enters view, stagger its children
+  const grids = document.querySelectorAll(
+    '.values-grid, .services-grid, .why-grid, .focus-grid, .sol-grid, .bv-grid, .leaders-grid'
+  );
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const children = entry.target.children;
+      [...children].forEach((child, i) => {
+        // Only animate if not already revealed
+        if (child.classList.contains('reveal') && !child.classList.contains('visible')) {
+          child.style.transitionDelay = `${i * 0.07}s`;
+        }
+      });
+      obs.unobserve(entry.target);
+    });
+  }, { threshold: .05 });
+
+  grids.forEach(g => obs.observe(g));
 })();
 
 /* ── CONSULTATION MODAL ──────────────────────────────────── */
 (function initConsultationModal() {
-  // ── Inject modal HTML ──────────────────────────────────
   const modalHTML = `
   <div id="consultationModal">
     <div class="modal-overlay"></div>
@@ -337,7 +638,6 @@ const MAILER_ENDPOINT = './send_consultation.php';
 
   document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-  // ── Extra styles injected once ─────────────────────────
   const style = document.createElement('style');
   style.textContent = `
     #consultationModal {
@@ -348,17 +648,15 @@ const MAILER_ENDPOINT = './send_consultation.php';
       align-items: center;
       justify-content: center;
       opacity: 0;
-      transition: opacity .35s ease;
+      transition: opacity .4s cubic-bezier(.4,0,.2,1);
     }
-    #consultationModal.open {
-      display: flex;
-      opacity: 1;
-    }
+    #consultationModal.open { display: flex; opacity: 1; }
     .modal-overlay {
       position: absolute;
       inset: 0;
       background: rgba(0,0,0,.72);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       cursor: pointer;
     }
     .modal-content {
@@ -373,10 +671,14 @@ const MAILER_ENDPOINT = './send_consultation.php';
       overflow-y: auto;
       padding: 3rem 2.5rem;
       box-shadow: 0 24px 80px rgba(0,0,0,.75);
-      animation: slideIn .4s cubic-bezier(.22,.68,0,1.2);
+      animation: slideIn .45s cubic-bezier(.34,1.56,.64,1);
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
     }
+    .modal-content::-webkit-scrollbar { width: 3px; }
+    .modal-content::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
     @keyframes slideIn {
-      from { transform: translateY(-28px); opacity: 0; }
+      from { transform: translateY(-28px) scale(.96); opacity: 0; }
       to   { transform: none; opacity: 1; }
     }
     .modal-close {
@@ -390,29 +692,18 @@ const MAILER_ENDPOINT = './send_consultation.php';
       color: var(--muted);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: color .2s, border-color .2s;
+      transition: color .25s, border-color .25s, transform .4s cubic-bezier(.34,1.56,.64,1), background .25s;
       line-height: 1;
     }
-    .modal-close:hover { color: var(--gold); border-color: var(--gold-line); }
+    .modal-close:hover { color: var(--gold); border-color: var(--gold-line); transform: rotate(90deg); background: rgba(201,151,58,.06); }
     .modal-header { margin-bottom: 2rem; }
-    .modal-header h2 {
-      font-family: var(--font-serif);
-      font-size: 1.85rem;
-      font-weight: 800;
-      color: var(--white);
-      margin-bottom: .4rem;
-    }
+    .modal-header h2 { font-family: var(--font-serif); font-size: 1.85rem; font-weight: 800; color: var(--white); margin-bottom: .4rem; }
     .modal-header p { font-size: .88rem; color: var(--muted); line-height: 1.6; }
     .consultation-form { display: flex; flex-direction: column; gap: 1.25rem; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .form-group { display: flex; flex-direction: column; gap: .45rem; }
-    .form-group label {
-      font-size: .72rem;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--gold);
-    }
+    .form-group label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); transition: color .2s; }
+    .form-group:focus-within label { color: var(--gold-bright); }
     .req { color: #e07070; }
     .form-group input,
     .form-group select,
@@ -424,23 +715,35 @@ const MAILER_ENDPOINT = './send_consultation.php';
       font-family: var(--font-sans);
       font-size: .88rem;
       color: var(--white);
-      transition: border-color .2s, box-shadow .2s;
+      transition: border-color .25s, box-shadow .25s, background .25s;
       width: 100%;
     }
     .form-group input::placeholder,
     .form-group textarea::placeholder { color: var(--muted); }
+    .form-group input:hover,
+    .form-group select:hover,
+    .form-group textarea:hover { border-color: rgba(201,151,58,.55); }
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
       outline: none;
       border-color: var(--gold-bright);
       box-shadow: 0 0 0 3px rgba(201,151,58,.18);
+      background: rgba(16,30,51,.9);
     }
     .form-group input.invalid,
     .form-group select.invalid,
     .form-group textarea.invalid {
       border-color: #e07070;
       box-shadow: 0 0 0 3px rgba(224,112,112,.15);
+      animation: shake .45s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
     }
     .form-group select {
       cursor: pointer;
@@ -453,17 +756,8 @@ const MAILER_ENDPOINT = './send_consultation.php';
       background-color: rgba(7,16,31,.7);
     }
     .form-group select option { background: #0d1a2e; color: var(--white); }
-    .form-group.checkbox {
-      flex-direction: row;
-      align-items: center;
-      gap: .7rem;
-    }
-    .form-group.checkbox input[type=checkbox] {
-      width: 18px; height: 18px;
-      flex-shrink: 0;
-      accent-color: var(--gold);
-      border-radius: 3px;
-    }
+    .form-group.checkbox { flex-direction: row; align-items: center; gap: .7rem; }
+    .form-group.checkbox input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--gold); border-radius: 3px; }
     .form-group textarea { resize: vertical; min-height: 100px; }
     .form-error {
       background: rgba(224,112,112,.1);
@@ -473,24 +767,15 @@ const MAILER_ENDPOINT = './send_consultation.php';
       font-size: .84rem;
       color: #f0a0a0;
       line-height: 1.55;
+      animation: fadeInDown .3s ease;
     }
-    .submit-btn {
-      width: 100%;
-      justify-content: center;
-      margin-top: .5rem;
-      gap: .65rem;
-      min-height: 48px;
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: none; }
     }
-    .submit-btn:disabled {
-      opacity: .7;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-    .form-note {
-      font-size: .72rem;
-      color: var(--muted);
-      text-align: center;
-    }
+    .submit-btn { width: 100%; justify-content: center; margin-top: .5rem; gap: .65rem; min-height: 48px; }
+    .submit-btn:disabled { opacity: .7; cursor: not-allowed; transform: none !important; }
+    .form-note { font-size: .72rem; color: var(--muted); text-align: center; }
     .modal-success {
       display: flex;
       flex-direction: column;
@@ -499,27 +784,13 @@ const MAILER_ENDPOINT = './send_consultation.php';
       gap: 1.25rem;
       padding: 2.5rem 0 1rem;
     }
-    .success-icon {
-      font-size: 3rem;
-      color: var(--gold);
-      animation: popIn .5s cubic-bezier(.22,.68,0,1.2);
-    }
+    .success-icon { font-size: 3rem; color: var(--gold); animation: popIn .55s cubic-bezier(.34,1.56,.64,1); }
     @keyframes popIn {
-      from { transform: scale(0) rotate(-30deg); opacity: 0; }
+      from { transform: scale(0) rotate(-20deg); opacity: 0; }
       to   { transform: scale(1) rotate(0deg); opacity: 1; }
     }
-    .modal-success h3 {
-      font-family: var(--font-serif);
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--white);
-    }
-    .modal-success p {
-      font-size: .9rem;
-      color: var(--muted);
-      line-height: 1.7;
-      max-width: 380px;
-    }
+    .modal-success h3 { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 800; color: var(--white); }
+    .modal-success p { font-size: .9rem; color: var(--muted); line-height: 1.7; max-width: 380px; }
     @media (max-width: 560px) {
       .modal-content { padding: 2rem 1.25rem; }
       .form-row { grid-template-columns: 1fr; }
@@ -528,37 +799,45 @@ const MAILER_ENDPOINT = './send_consultation.php';
   `;
   document.head.appendChild(style);
 
-  // ── Element refs ───────────────────────────────────────
-  const modal      = document.getElementById('consultationModal');
-  const overlay    = modal.querySelector('.modal-overlay');
-  const closeBtn   = modal.querySelector('.modal-close');
-  const form       = document.getElementById('consultationForm');
-  const successBox = modal.querySelector('.modal-success');
-  const submitBtn  = document.getElementById('submitBtn');
-  const btnLabel   = submitBtn.querySelector('.btn-label');
-  const btnSpinner = submitBtn.querySelector('.btn-spinner');
-  const formError  = document.getElementById('formError');
+  const modal           = document.getElementById('consultationModal');
+  const overlay         = modal.querySelector('.modal-overlay');
+  const closeBtn        = modal.querySelector('.modal-close');
+  const form            = document.getElementById('consultationForm');
+  const successBox      = modal.querySelector('.modal-success');
+  const submitBtn       = document.getElementById('submitBtn');
+  const btnLabel        = submitBtn.querySelector('.btn-label');
+  const btnSpinner      = submitBtn.querySelector('.btn-spinner');
+  const formError       = document.getElementById('formError');
   const closeSuccessBtn = document.getElementById('closeSuccessBtn');
 
-  // ── Open / Close ───────────────────────────────────────
   window.openConsultationModal = () => {
     modal.style.display = 'flex';
-    requestAnimationFrame(() => { modal.style.opacity = '1'; });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { modal.style.opacity = '1'; });
+    });
     document.body.style.overflow = 'hidden';
+    // Focus first input for accessibility
+    setTimeout(() => {
+      modal.querySelector('input')?.focus();
+    }, 100);
   };
 
   const closeModal = () => {
     modal.style.opacity = '0';
+    modal.querySelector('.modal-content').style.transform = 'translateY(12px) scale(.97)';
+    modal.querySelector('.modal-content').style.transition = 'transform .35s ease, opacity .35s ease';
     setTimeout(() => {
       modal.style.display = 'none';
+      modal.querySelector('.modal-content').style.transform = '';
+      modal.querySelector('.modal-content').style.transition = '';
       document.body.style.overflow = '';
       form.reset();
       form.style.display = '';
       successBox.style.display = 'none';
-      formError.style.display = 'none';
+      formError.style.display  = 'none';
       form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
       setLoading(false);
-    }, 350);
+    }, 360);
   };
 
   closeBtn.addEventListener('click', closeModal);
@@ -568,59 +847,63 @@ const MAILER_ENDPOINT = './send_consultation.php';
     if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
   });
 
-  // ── Loading state ──────────────────────────────────────
   function setLoading(loading) {
-    submitBtn.disabled = loading;
-    btnLabel.style.display  = loading ? 'none' : '';
+    submitBtn.disabled       = loading;
+    btnLabel.style.display   = loading ? 'none' : '';
     btnSpinner.style.display = loading ? 'inline-flex' : 'none';
   }
 
-  // ── Validation ─────────────────────────────────────────
   function validate() {
     let ok = true;
     form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 
     ['fullName','company','email','interest'].forEach(name => {
       const el = form.querySelector(`[name="${name}"]`);
-      if (!el.value.trim()) { el.classList.add('invalid'); ok = false; }
+      if (el && !el.value.trim()) {
+        // Force reflow to re-trigger shake animation
+        el.classList.remove('invalid');
+        void el.offsetWidth;
+        el.classList.add('invalid');
+        ok = false;
+      }
     });
 
     const email = form.querySelector('[name="email"]');
-    if (email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-      email.classList.add('invalid'); ok = false;
+    if (email?.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+      email.classList.remove('invalid');
+      void email.offsetWidth;
+      email.classList.add('invalid');
+      ok = false;
     }
 
     const consent = form.querySelector('[name="consent"]');
-    if (!consent.checked) {
-      consent.classList.add('invalid'); ok = false;
+    if (!consent?.checked) {
+      consent?.classList.add('invalid');
+      ok = false;
     }
 
     return ok;
   }
 
-  // ── Send via PHPMailer backend ─────────────────────────────
   async function sendEmail(data) {
-    const res = await fetch(MAILER_ENDPOINT, {
+    const res  = await fetch(MAILER_ENDPOINT, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(data),
     });
-
     const json = await res.json().catch(() => ({}));
-
-    if (!res.ok || !json.success) {
-      throw new Error(json.error || 'Server error. Please try again.');
-    }
+    if (!res.ok || !json.success) throw new Error(json.error || 'Server error. Please try again.');
   }
 
-  // ── Submit handler ─────────────────────────────────────
   form.addEventListener('submit', async e => {
     e.preventDefault();
     formError.style.display = 'none';
 
     if (!validate()) {
-      formError.textContent = 'Please fill in all required fields and accept the consent checkbox.';
+      formError.textContent   = 'Please fill in all required fields and accept the consent checkbox.';
       formError.style.display = 'block';
+      // Scroll error into view
+      formError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
 
@@ -637,8 +920,8 @@ const MAILER_ENDPOINT = './send_consultation.php';
 
     try {
       await sendEmail(data);
-      form.style.display = 'none';
-      successBox.style.display = 'flex';
+      form.style.display          = 'none';
+      successBox.style.display    = 'flex';
     } catch (err) {
       console.error('[PHI Resilience] Email send error:', err);
       formError.innerHTML =
@@ -647,5 +930,12 @@ const MAILER_ENDPOINT = './send_consultation.php';
       formError.style.display = 'block';
       setLoading(false);
     }
+  });
+
+  // Live validation: clear error on valid input
+  form.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', () => {
+      if (el.value.trim()) el.classList.remove('invalid');
+    });
   });
 })();
