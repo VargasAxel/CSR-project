@@ -1,5 +1,5 @@
 /* ============================================================
-   PHI RESILIENCE — script.js (Improved)
+   PHI RESILIENCE — script.js (Teal-Dominant Edition)
    ============================================================ */
 
 'use strict';
@@ -13,7 +13,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
 /* ── CUSTOM CURSOR ───────────────────────────────────────── */
 (function initCursor() {
-  // Skip on touch-only devices
   if (window.matchMedia('(hover: none)').matches) return;
 
   const dot  = document.createElement('div');
@@ -22,11 +21,8 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   ring.className = 'cursor-ring';
   document.body.append(dot, ring);
 
-  // Raw mouse position
   let mx = -200, my = -200;
-  // Lerped ring position (follows with lag)
   let rx = -200, ry = -200;
-  // Lerped dot position (tighter lag)
   let dx = -200, dy = -200;
 
   let isHovered  = false;
@@ -49,7 +45,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     if (isHovered) ring.classList.add('hovered');
   });
 
-  // Register hoverable targets
   const registerHoverables = () => {
     document.querySelectorAll(
       'a, button, .el, .value-card, .svc-card, .why-card, .mv-card, .ctile, .stat-cell, .about-chip, .c-chip, .exp-tag'
@@ -68,7 +63,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   };
   registerHoverables();
 
-  // Re-register after dynamic content (modal injection)
   const observer = new MutationObserver(() => registerHoverables());
   observer.observe(document.body, { childList: true, subtree: true });
 
@@ -82,10 +76,8 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   });
 
   function tick() {
-    // Ring: smooth, slower follow
     rx = lerp(rx, mx, 0.10);
     ry = lerp(ry, my, 0.10);
-    // Dot: faster, near-instant
     dx = lerp(dx, mx, 0.55);
     dy = lerp(dy, my, 0.55);
 
@@ -98,7 +90,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   }
   tick();
 
-  // Ripple position on buttons
   document.addEventListener('mousemove', e => {
     const btn = e.target.closest('.btn');
     if (!btn) return;
@@ -120,10 +111,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
   function updateNav() {
     const y = window.scrollY;
-
     nav.classList.toggle('scrolled', y > 60);
-
-    // Auto-hide nav when scrolling down fast, show on up
     if (Math.abs(y - lastScroll) > 8) {
       if (y > lastScroll && y > 200) {
         nav.style.transform = 'translateY(-105%)';
@@ -135,7 +123,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     ticking = false;
   }
 
-  // Add smooth transition on nav for hide/show
   nav.style.transition = 'transform .4s cubic-bezier(.4,0,.2,1), background .5s, backdrop-filter .5s, border-color .5s, padding .4s';
 
   updateNav();
@@ -146,7 +133,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     }
   }, { passive: true });
 
-  // Hamburger
   if (hbg && navM) {
     hbg.addEventListener('click', () => {
       const isOpen = navM.classList.toggle('open');
@@ -169,7 +155,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     document.body.style.overflow = '';
   };
 
-  // Close mobile nav on escape
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && navM?.classList.contains('open')) window.closeM();
   });
@@ -183,11 +168,8 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       if (!target) return;
       e.preventDefault();
       window.closeM?.();
-
-      // Offset for fixed nav (~70px)
       const navH = document.getElementById('nav')?.offsetHeight ?? 70;
       const top  = target.getBoundingClientRect().top + window.scrollY - navH - 12;
-
       window.scrollTo({ top, behavior: 'smooth' });
     });
   });
@@ -209,7 +191,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
 /* ── COUNTER ANIMATION ───────────────────────────────────── */
 (function initCounters() {
-  // Smooth ease-out quartic
   const ease = t => 1 - Math.pow(1 - t, 4);
 
   const obs = new IntersectionObserver(entries => {
@@ -279,7 +260,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   const tip  = document.getElementById('ptTip');
   if (!grid) return;
 
-  // Tooltip position with edge clamping
   let tipTx = -500, tipTy = -500;
   let tipRx = -500, tipRy = -500;
   let tipRaf = null;
@@ -322,7 +302,8 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       <div class="el-sym">${e.sym}</div>
       <div class="el-name">${e.name}</div>`;
 
-    const content = `<strong>${e.name}</strong><br>${e.desc}<br><small style="color:var(--gold);margin-top:.35rem;display:block">SDG ${e.sdg}</small>`;
+    /* SDG label now uses teal instead of gold */
+    const content = `<strong>${e.name}</strong><br>${e.desc}<br><small style="color:var(--teal-bright);margin-top:.35rem;display:block">SDG ${e.sdg}</small>`;
 
     el.addEventListener('mousemove', ev => showTip(content, ev.clientX, ev.clientY));
     el.addEventListener('mouseleave', hideTip);
@@ -403,10 +384,8 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     function animateTilt() {
       currentRX = lerp(currentRX, targetRX, 0.12);
       currentRY = lerp(currentRY, targetRY, 0.12);
-
       const dist = Math.abs(currentRX - targetRX) + Math.abs(currentRY - targetRY);
       card.style.transform = `translateY(-${LIFT}px) rotateX(${currentRX}deg) rotateY(${currentRY}deg)`;
-
       if (dist > 0.01) {
         rafId = requestAnimationFrame(animateTilt);
       } else {
@@ -426,7 +405,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       cancelAnimationFrame(rafId);
       targetRX = 0;
       targetRY = 0;
-      // Spring back with CSS transition
       card.style.transition = 'transform .6s cubic-bezier(.34,1.56,.64,1)';
       card.style.transform  = '';
     });
@@ -484,9 +462,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       tx = 0; ty = 0;
       btn.style.transition = 'transform .65s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, background-position .5s, opacity .25s, border-color .25s, color .25s';
       btn.style.transform  = '';
-      requestAnimationFrame(() => {
-        cx = 0; cy = 0;
-      });
+      requestAnimationFrame(() => { cx = 0; cy = 0; });
     });
   });
 })();
@@ -494,12 +470,13 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 /* ── SCROLL PROGRESS INDICATOR ───────────────────────────── */
 (function initScrollProgress() {
   const bar = document.createElement('div');
+  /* Progress bar uses teal gradient */
   bar.style.cssText = `
     position: fixed;
     top: 0; left: 0;
     height: 2px;
     width: 0%;
-    background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+    background: linear-gradient(90deg, var(--teal), var(--teal-bright));
     z-index: 9998;
     pointer-events: none;
     transform-origin: left;
@@ -523,7 +500,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
 /* ── STAGGERED CHILD REVEALS ─────────────────────────────── */
 (function initStaggeredReveal() {
-  // When a grid enters view, stagger its children
   const grids = document.querySelectorAll(
     '.values-grid, .services-grid, .why-grid, .focus-grid, .sol-grid, .bv-grid, .leaders-grid'
   );
@@ -533,7 +509,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       if (!entry.isIntersecting) return;
       const children = entry.target.children;
       [...children].forEach((child, i) => {
-        // Only animate if not already revealed
         if (child.classList.contains('reveal') && !child.classList.contains('visible')) {
           child.style.transitionDelay = `${i * 0.07}s`;
         }
@@ -663,7 +638,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       position: relative;
       z-index: 1;
       background: var(--navy-light);
-      border: 1px solid var(--gold-line);
+      border: 1px solid var(--teal-line);
       border-radius: 8px;
       max-width: 580px;
       width: 92vw;
@@ -676,7 +651,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       overscroll-behavior: contain;
     }
     .modal-content::-webkit-scrollbar { width: 3px; }
-    .modal-content::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+    .modal-content::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
     @keyframes slideIn {
       from { transform: translateY(-28px) scale(.96); opacity: 0; }
       to   { transform: none; opacity: 1; }
@@ -695,21 +670,29 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       transition: color .25s, border-color .25s, transform .4s cubic-bezier(.34,1.56,.64,1), background .25s;
       line-height: 1;
     }
-    .modal-close:hover { color: var(--gold); border-color: var(--gold-line); transform: rotate(90deg); background: rgba(201,151,58,.06); }
+    .modal-close:hover {
+      color: var(--teal-bright);
+      border-color: var(--teal-line);
+      transform: rotate(90deg);
+      background: rgba(49,167,182,.07);
+    }
     .modal-header { margin-bottom: 2rem; }
     .modal-header h2 { font-family: var(--font-serif); font-size: 1.85rem; font-weight: 800; color: var(--white); margin-bottom: .4rem; }
     .modal-header p { font-size: .88rem; color: var(--muted); line-height: 1.6; }
     .consultation-form { display: flex; flex-direction: column; gap: 1.25rem; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .form-group { display: flex; flex-direction: column; gap: .45rem; }
-    .form-group label { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); transition: color .2s; }
-    .form-group:focus-within label { color: var(--gold-bright); }
+    .form-group label {
+      font-size: .72rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--teal-bright); transition: color .2s;
+    }
+    .form-group:focus-within label { color: var(--teal-bright); filter: brightness(1.2); }
     .req { color: #e07070; }
     .form-group input,
     .form-group select,
     .form-group textarea {
       background: rgba(7,16,31,.7);
-      border: 1px solid var(--gold-line);
+      border: 1px solid var(--teal-line);
       border-radius: 4px;
       padding: .8rem 1rem;
       font-family: var(--font-sans);
@@ -722,13 +705,13 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     .form-group textarea::placeholder { color: var(--muted); }
     .form-group input:hover,
     .form-group select:hover,
-    .form-group textarea:hover { border-color: rgba(201,151,58,.55); }
+    .form-group textarea:hover { border-color: var(--teal-bright); }
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
       outline: none;
-      border-color: var(--gold-bright);
-      box-shadow: 0 0 0 3px rgba(201,151,58,.18);
+      border-color: var(--teal-bright);
+      box-shadow: 0 0 0 3px rgba(49,167,182,.2);
       background: rgba(16,30,51,.9);
     }
     .form-group input.invalid,
@@ -748,7 +731,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     .form-group select {
       cursor: pointer;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23c9973a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%2331a7b6' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 1rem center;
       background-size: 12px;
@@ -757,7 +740,10 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     }
     .form-group select option { background: #0d1a2e; color: var(--white); }
     .form-group.checkbox { flex-direction: row; align-items: center; gap: .7rem; }
-    .form-group.checkbox input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--gold); border-radius: 3px; }
+    .form-group.checkbox input[type=checkbox] {
+      width: 18px; height: 18px; flex-shrink: 0;
+      accent-color: var(--teal-bright); border-radius: 3px;
+    }
     .form-group textarea { resize: vertical; min-height: 100px; }
     .form-error {
       background: rgba(224,112,112,.1);
@@ -784,7 +770,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       gap: 1.25rem;
       padding: 2.5rem 0 1rem;
     }
-    .success-icon { font-size: 3rem; color: var(--gold); animation: popIn .55s cubic-bezier(.34,1.56,.64,1); }
+    .success-icon { font-size: 3rem; color: var(--teal-bright); animation: popIn .55s cubic-bezier(.34,1.56,.64,1); }
     @keyframes popIn {
       from { transform: scale(0) rotate(-20deg); opacity: 0; }
       to   { transform: scale(1) rotate(0deg); opacity: 1; }
@@ -816,10 +802,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       requestAnimationFrame(() => { modal.style.opacity = '1'; });
     });
     document.body.style.overflow = 'hidden';
-    // Focus first input for accessibility
-    setTimeout(() => {
-      modal.querySelector('input')?.focus();
-    }, 100);
+    setTimeout(() => { modal.querySelector('input')?.focus(); }, 100);
   };
 
   const closeModal = () => {
@@ -860,7 +843,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     ['fullName','company','email','interest'].forEach(name => {
       const el = form.querySelector(`[name="${name}"]`);
       if (el && !el.value.trim()) {
-        // Force reflow to re-trigger shake animation
         el.classList.remove('invalid');
         void el.offsetWidth;
         el.classList.add('invalid');
@@ -902,7 +884,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     if (!validate()) {
       formError.textContent   = 'Please fill in all required fields and accept the consent checkbox.';
       formError.style.display = 'block';
-      // Scroll error into view
       formError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
@@ -926,13 +907,12 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       console.error('[PHI Resilience] Email send error:', err);
       formError.innerHTML =
         'Something went wrong sending your message. Please try emailing us directly at ' +
-        '<a href="mailto:info@mardietorres.com" style="color:var(--gold)">info@mardietorres.com</a>.';
+        '<a href="mailto:info@mardietorres.com" style="color:var(--teal-bright)">info@mardietorres.com</a>.';
       formError.style.display = 'block';
       setLoading(false);
     }
   });
 
-  // Live validation: clear error on valid input
   form.querySelectorAll('input, select, textarea').forEach(el => {
     el.addEventListener('input', () => {
       if (el.value.trim()) el.classList.remove('invalid');
