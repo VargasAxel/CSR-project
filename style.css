@@ -2164,3 +2164,85 @@ footer {
   .section-title span { color: #0f3e4a; -webkit-text-fill-color: #0f3e4a; }
   .stat-num { -webkit-text-fill-color: #0f3e4a; }
 }
+
+/* ============================================================
+   LOGO ADDITIONS — append these rules to the end of style.css
+   ============================================================ */
+
+/* ── NAV LOGO LOCKUP ─────────────────────────────────────── */
+.nav-logo-link {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  text-decoration: none;
+}
+
+.nav-logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  /* mix-blend-mode removes the black PNG background on dark surfaces */
+  mix-blend-mode: screen;
+  filter: brightness(1.15) saturate(1.1);
+  transition: transform .55s cubic-bezier(.34,1.56,.64,1), filter .35s;
+  flex-shrink: 0;
+}
+.nav-logo-link:hover .nav-logo-img {
+  transform: rotate(18deg) scale(1.12);
+  filter: brightness(1.35) saturate(1.3) drop-shadow(0 0 10px rgba(91,205,130,.6));
+}
+
+.nav-logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HERO LOGO LOCKUP ────────────────────────────────────── */
+.hero-logo-lockup {
+  margin-bottom: 1.6rem;
+  opacity: 0;
+  animation: fadeUp .7s .05s cubic-bezier(.16,1,.3,1) forwards;
+}
+
+.hero-logo-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: brightness(1.1) saturate(1.15) drop-shadow(0 0 20px rgba(49,167,182,.5));
+  transition: filter .4s, transform .6s cubic-bezier(.34,1.56,.64,1);
+  /* slow ambient glow pulse */
+  animation: logoGlow 6s ease-in-out infinite alternate;
+}
+.hero-logo-img:hover {
+  filter: brightness(1.35) saturate(1.3) drop-shadow(0 0 32px rgba(91,205,130,.7));
+  transform: rotate(12deg) scale(1.08);
+}
+
+@keyframes logoGlow {
+  from {
+    filter: brightness(1.1) saturate(1.15) drop-shadow(0 0 18px rgba(49,167,182,.4));
+  }
+  to {
+    filter: brightness(1.22) saturate(1.25) drop-shadow(0 0 30px rgba(91,205,130,.55));
+  }
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .nav-logo-img  { width: 38px; height: 38px; }
+  .hero-logo-img { width: 88px; height: 88px; }
+}
+
+@media (max-width: 768px) {
+  .nav-logo-img  { width: 34px; height: 34px; }
+  .hero-logo-img { width: 76px; height: 76px; }
+  .nav-logo-link { gap: .55rem; }
+}
+
+@media (max-width: 480px) {
+  .nav-logo-img  { width: 30px; height: 30px; }
+  .hero-logo-img { width: 62px; height: 62px; }
+  .nav-logo-link { gap: .45rem; }
+}
+
