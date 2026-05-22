@@ -16,7 +16,6 @@
 <body>
     <!-- NAV -->
     <nav id="nav">
-        <!-- LOGO: img + text lockup -->
         <a href="#hero" class="nav-logo-link">
             <img src="NO_BG.png" alt="PHI Resilience Logo" class="nav-logo-img" />
             <div class="nav-logo-text">
@@ -51,10 +50,6 @@
         <div class="hero-pattern"></div>
         <div class="hero-glow"></div>
         <div class="hero-inner">
-            <!-- LOGO mark displayed large in hero
-            <div class="hero-logo-lockup">
-                <img src="NO_BG.png" alt="PHI Resilience" class="hero-logo-img" />
-            </div> -->
             <p class="hero-eyebrow">Philippines-Based CSR &amp; Sustainability Consultancy</p>
             <h1 class="hero-title">
                 Strategic CSR.<br>
@@ -237,20 +232,26 @@
     <section id="periodic">
         <div class="container">
             <p class="eyebrow reveal">Our Proprietary Framework</p>
-            <h2 class="section-title reveal delay-1">The Periodic Table of <span>Basic CSR</span></h2>
+            <h2 class="section-title reveal delay-1">
+                The Periodic Table of <span>Basic CSR</span>
+            </h2>
             <div class="gold-bar reveal delay-2"></div>
-            <p class="section-subtitle reveal delay-2">What sets PHI Resilience apart — a modular framework categorizing
-                every essential CSR service into six core element groups. Select individual elements or combine them
-                into integrated programs tailored to your industry, risk profile, and community context. Hover any
-                element for details.</p>
+            <p class="section-subtitle reveal delay-2">
+                What sets PHI Resilience apart — a modular framework categorizing every essential CSR service into six core element groups.
+                Select individual elements or combine them into integrated programs tailored to your industry, risk profile, and community context.
+                Hover any element for details.
+            </p>
+            <!-- JS fills this grid -->
             <div class="periodic-grid reveal delay-3" id="ptGrid"></div>
             <div class="periodic-note reveal delay-4">
-                <strong>How to combine:</strong> Each element is independently deployable. E.g., <strong>E4 + C1 +
-                    R5</strong> = solar infrastructure + livelihood training + microenterprise risk-readiness — a
-                self-reinforcing ecosystem with clear ESG attribution and SDG alignment.
+                <strong>How to combine:</strong>
+                Each element is independently deployable. E.g., <strong>E4 + C1 + R5</strong>
+                = solar infrastructure + livelihood training + microenterprise risk-readiness — a self-reinforcing ecosystem with clear ESG attribution and SDG alignment.
             </div>
         </div>
     </section>
+    <!-- Tooltip used by the framework JS -->
+    <div class="pt-tooltip" id="ptTip"></div>
 
     <!-- FOCUS AREAS -->
     <section id="focus">
@@ -383,10 +384,8 @@
                         <p>All collaborations aligned with mission and priorities of each partner.</p>
                         <ul>
                             <li>Corporations: ESG compliance, employee engagement, sustainability goals</li>
-                            <li>Foundations &amp; Bilateral Agencies: Evidence-based impact, scalability, SDG alignment
-                            </li>
-                            <li>NGOs &amp; Academic Institutions: Co-create on research, implementation, and training
-                            </li>
+                            <li>Foundations &amp; Bilateral Agencies: Evidence-based impact, scalability, SDG alignment</li>
+                            <li>NGOs &amp; Academic Institutions: Co-create on research, implementation, and training</li>
                         </ul>
                     </div>
                 </div>
@@ -397,8 +396,7 @@
                         <p>A participatory approach to every stage of program development.</p>
                         <ul>
                             <li>Diagnostics and readiness assessments to shape tailored CSR roadmaps</li>
-                            <li>Co-creates resilience initiatives — livelihoods, business continuity, nature-based
-                                solutions</li>
+                            <li>Co-creates resilience initiatives — livelihoods, business continuity, nature-based solutions</li>
                             <li>Integrates ESG reporting metrics to communicate impact clearly and credibly</li>
                         </ul>
                     </div>
@@ -421,8 +419,7 @@
                         <h3>Knowledge Sharing &amp; Resource Leveraging</h3>
                         <p>Mobilizing a diverse network for shared learning and co-financing.</p>
                         <ul>
-                            <li>Multi-sector learning exchanges, public-private dialogues, and community impact labs
-                            </li>
+                            <li>Multi-sector learning exchanges, public-private dialogues, and community impact labs</li>
                             <li>Access to policy frameworks, training modules, and ESG compliance tools</li>
                             <li>Shared funding models for co-financing climate and development projects</li>
                         </ul>
@@ -434,10 +431,8 @@
                         <h3>Program Replication and Scaling</h3>
                         <p>Proven pilots packaged for easy replication across communities.</p>
                         <ul>
-                            <li>Urban Garden-to-Table, Safe Learning Spaces, Micro-enterprise Risk Readiness —
-                                documented for replication</li>
-                            <li>Partners benefit from co-branding, shared knowledge capital, and expanded geographic
-                                reach</li>
+                            <li>Urban Garden-to-Table, Safe Learning Spaces, Micro-enterprise Risk Readiness — documented for replication</li>
+                            <li>Partners benefit from co-branding, shared knowledge capital, and expanded geographic reach</li>
                             <li>Implementation guides, monitoring frameworks, and coaching for multi-site rollout</li>
                         </ul>
                     </div>
@@ -464,8 +459,7 @@
                 </div>
                 <div class="sol-card reveal delay-3">
                     <div class="sol-hdr navy"><span>🏢</span> Sectors We Serve</div>
-                    <div class="sol-item"><span class="sol-arrow">→</span>Multinational Corporations (BPO, Energy,
-                        Logistics)</div>
+                    <div class="sol-item"><span class="sol-arrow">→</span>Multinational Corporations (BPO, Energy, Logistics)</div>
                     <div class="sol-item"><span class="sol-arrow">→</span>Local Government Units (LGUs)</div>
                     <div class="sol-item"><span class="sol-arrow">→</span>NGOs and Foundations</div>
                     <div class="sol-item"><span class="sol-arrow">→</span>Donor &amp; Bilateral Agencies</div>
@@ -566,8 +560,7 @@
                         <p class="leader-bio">Mardie Torres is a seasoned and mission-driven professional with 25+ years
                             of cross-sector experience in Corporate Social Responsibility, resource development, and
                             community resilience. He has a proven ability to lead multi-stakeholder projects and align
-                            corporate strategies with SDGs and ESG principles across the Philippines and Asia-Pacific.
-                        </p>
+                            corporate strategies with SDGs and ESG principles across the Philippines and Asia-Pacific.</p>
                         <p class="leader-bio">He brings a systems-thinking approach to CSR design and implementation,
                             helping organizations navigate social and environmental challenges while maximizing shared
                             value through community-driven advocacy, fundraising, and inclusive governance.</p>
@@ -675,8 +668,7 @@
             <div class="bv-grid">
                 <div class="bv-item reveal delay-1">
                     <div class="bv-check">✓</div>
-                    <p>Impact aligned with ESG and SDGs, strengthening your sustainability disclosures and regulatory
-                        standing</p>
+                    <p>Impact aligned with ESG and SDGs, strengthening your sustainability disclosures and regulatory standing</p>
                 </div>
                 <div class="bv-item reveal delay-2">
                     <div class="bv-check">✓</div>
@@ -688,13 +680,11 @@
                 </div>
                 <div class="bv-item reveal delay-2">
                     <div class="bv-check">✓</div>
-                    <p>Real, visible transformation in underserved communities — building your social license to operate
-                    </p>
+                    <p>Real, visible transformation in underserved communities — building your social license to operate</p>
                 </div>
                 <div class="bv-item reveal delay-1">
                     <div class="bv-check">✓</div>
-                    <p>Engaging opportunities for employee volunteerism, driving internal culture and talent retention
-                    </p>
+                    <p>Engaging opportunities for employee volunteerism, driving internal culture and talent retention</p>
                 </div>
                 <div class="bv-item reveal delay-2">
                     <div class="bv-check">✓</div>
@@ -731,8 +721,7 @@
                 </div>
             </div>
             <div class="contact-btns reveal delay-4">
-                <a href="#" class="btn btn-gold" onclick="event.preventDefault(); openConsultationModal();">Schedule a
-                    Consultation</a>
+                <a href="#" class="btn btn-gold" onclick="event.preventDefault(); openConsultationModal();">Schedule a Consultation</a>
                 <a href="#" class="btn btn-ghost">Request a CSR Assessment</a>
             </div>
             <div class="contact-chips reveal delay-5">
@@ -760,9 +749,6 @@
         </div>
     </footer>
 
-    <div class="pt-tooltip" id="ptTip"></div>
-
-    <!-- Modal is injected by script.js -->
     <script src="script.js"></script>
 </body>
 
