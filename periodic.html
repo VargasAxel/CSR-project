@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>PHI Resilience — Periodic Table of Basic CSR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <!-- NAV (minimal reuse; keep your original markup if you prefer) -->
+    <nav id="nav">
+        <a href="index.html#hero" class="nav-logo-link">
+            <img src="NO_BG.png" alt="PHI Resilience Logo" class="nav-logo-img" />
+            <div class="nav-logo-text">
+                <div class="nav-logo-name">PHI <span>Resilience</span></div>
+                <span class="nav-logo-tag">Strategic Management Services</span>
+            </div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html#about">About</a>
+            <a href="index.html#services">Services</a>
+            <a href="periodic.html" class="active">Framework</a>
+            <a href="index.html#approach">Approach</a>
+            <a href="index.html#leadership">Leadership</a>
+            <a href="#" class="nav-cta" onclick="event.preventDefault(); openConsultationModal();">Get In Touch</a>
+        </div>
+        <div class="hamburger" id="hbg">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <div class="nav-mobile" id="navM">
+        <a href="index.html#about" onclick="closeM()">About</a>
+        <a href="index.html#services" onclick="closeM()">Services</a>
+        <a href="periodic.html" onclick="closeM()">Our Framework</a>
+        <a href="index.html#approach" onclick="closeM()">Approach</a>
+        <a href="index.html#partnership" onclick="closeM()">Partnership Model</a>
+        <a href="index.html#leadership" onclick="closeM()">Leadership</a>
+        <a href="#" onclick="event.preventDefault(); openConsultationModal(); closeM();">Get In Touch</a>
+    </div>
+
+    <!-- PERIODIC TABLE -->
+    <section id="periodic">
+        <div class="container">
+            <p class="eyebrow reveal">Our Proprietary Framework</p>
+            <h2 class="section-title reveal delay-1">
+                The Periodic Table of <span>Basic CSR</span>
+            </h2>
+            <div class="gold-bar reveal delay-2"></div>
+            <p class="section-subtitle reveal delay-2">
+                What sets PHI Resilience apart — a modular framework categorizing every essential CSR service into six core element groups.
+                Select individual elements or combine them into integrated programs tailored to your industry, risk profile, and community context.
+                Hover any element for details.
+            </p>
+
+            <!-- JS fills this grid -->
+            <div class="periodic-grid reveal delay-3" id="ptGrid"></div>
+
+            <div class="periodic-note reveal delay-4">
+                <strong>How to combine:</strong>
+                Each element is independently deployable. E.g., <strong>E4 + C1 + R5</strong>
+                = solar infrastructure + livelihood training + microenterprise risk-readiness — a self-reinforcing ecosystem with clear ESG attribution and SDG alignment.
+            </div>
+        </div>
+    </section>
+
+    <!-- Tooltip used by the framework JS -->
+    <div class="pt-tooltip" id="ptTip"></div>
+
+    <footer>
+        <div class="footer-brand">PHI <span>Resilience</span> Strategic Management Services</div>
+        <div class="footer-copy">© 2025 PHI Resilience. All rights reserved.</div>
+        <div class="footer-links">
+            <a href="index.html#about">About</a>
+            <a href="index.html#services">Services</a>
+            <a href="index.html#leadership">Leadership</a>
+            <a href="index.html#contact">Contact</a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
+
