@@ -1951,7 +1951,7 @@ footer {
   text-decoration: none;
 }
 .nav-logo-img {
-  width: 42px; height: 42px;
+  width: 70px; height: 70px;
   object-fit: contain;
   transition: transform .55s cubic-bezier(.34,1.56,.64,1), filter .35s;
   flex-shrink: 0;
