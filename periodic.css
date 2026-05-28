@@ -1,0 +1,171 @@
+/* ============================================================
+   PHI RESILIENCE — Periodic Table CSS
+   These styles were missing from style.css, so periodic.html
+   was rendering without visual layout.
+   ============================================================ */
+
+/* Layout wrapper */
+#periodic .periodic-grid{
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(170px, 1fr));
+  gap: 18px;
+  align-items: start;
+  margin-top: 1.75rem;
+}
+
+/* Column */
+.pt-col{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Column header */
+.pt-header{
+  height: 52px;
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+
+.pt-sym{
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .12em;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.pt-cat{
+  color: rgba(255,255,255,.85);
+  font-weight: 650;
+  font-size: .72rem;
+  letter-spacing: .02em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+/* Items list */
+.pt-items{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Each element tile */
+.pt-item{
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid rgba(13,115,119,.22);
+  background: linear-gradient(180deg, rgba(13,115,119,.06), rgba(13,115,119,.02));
+  padding: 14px 12px;
+  cursor: default;
+  box-shadow: 0 8px 26px rgba(13,115,119,.10);
+  transition: transform .25s cubic-bezier(.2,.8,.2,1),
+              box-shadow .25s,
+              border-color .25s,
+              background .25s;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pt-item:hover{
+  transform: translateY(-4px);
+  border-color: rgba(212,160,23,.55);
+  box-shadow: 0 14px 40px rgba(0,0,0,.12);
+  background: linear-gradient(180deg, rgba(212,160,23,.12), rgba(13,115,119,.04));
+}
+
+.pt-item .pt-code{
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-weight: 900;
+  font-size: .92rem;
+  color: var(--teal, #0D7377);
+}
+
+.pt-item span:not(.pt-code){
+  font-size: .86rem;
+  color: var(--navy, #1A2E4A);
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+/* Tooltip for hover/touch */
+.pt-tooltip{
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  z-index: 99999;
+  pointer-events: none;
+  max-width: 260px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(13,115,119,.22);
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 60px rgba(0,0,0,.18);
+  opacity: 0;
+  transform: translateY(6px) scale(.98);
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.pt-tooltip.show{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.pt-tooltip strong{
+  display: block;
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: .95rem;
+  color: var(--navy, #1A2E4A);
+  margin-bottom: 6px;
+}
+
+.pt-tooltip small{
+  font-size: .78rem;
+  color: var(--teal-bright, #1a9a9f);
+}
+
+.pt-tooltip::after{
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  left: 18px;
+  bottom: -6px;
+  background: rgba(255,255,255,.96);
+  border-right: 1px solid rgba(13,115,119,.22);
+  border-bottom: 1px solid rgba(13,115,119,.22);
+  transform: rotate(45deg);
+}
+
+/* Responsive */
+@media (max-width: 1200px){
+  #periodic .periodic-grid{ grid-template-columns: repeat(4, minmax(170px, 1fr)); }
+}
+
+@media (max-width: 900px){
+  #periodic .periodic-grid{ grid-template-columns: repeat(2, minmax(170px, 1fr)); }
+}
+
+@media (max-width: 560px){
+  #periodic .periodic-grid{ grid-template-columns: 1fr; }
+  .pt-header{ height: auto; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .pt-item{ transition: none; }
+  .pt-tooltip{ transition: none; }
+}
+

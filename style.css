@@ -340,12 +340,7 @@ section:nth-child(even) { background: var(--gray-bg); }
   align-items: center;
   justify-content: space-between;
   height: 66px;
-  transition:
-    background .5s var(--ease-smooth),
-    backdrop-filter .5s,
-    box-shadow .35s,
-    padding .4s var(--ease-smooth);
-  will-change: padding, background;
+  background: rgba(15,30,48,.97);
 }
 #nav.scrolled {
   background: rgba(15,30,48,.97);
@@ -1631,7 +1626,7 @@ footer {
   text-decoration: none;
 }
 .nav-logo-img {
-  width: 70px; height: 70px;
+  width: 55px; height: 55px;
   object-fit: contain;
   transition: transform .55s cubic-bezier(.34,1.56,.64,1), filter .35s;
   flex-shrink: 0;
