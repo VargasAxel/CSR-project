@@ -1,5 +1,5 @@
 /* ============================================================
-   PHI RESILIENCE — script.js (Column Periodic Table Edition)
+   PHI RESILIENCE — script.js (Auth-Aware Edition)
    ============================================================ */
 
 'use strict';
@@ -7,9 +7,102 @@
 /* ── MAILER ENDPOINT ─────────────────────────────────────── */
 const MAILER_ENDPOINT = './send_consultation.php';
 
+/* ── AUTH ENDPOINTS ──────────────────────────────────────── */
+const AUTH_CHECK_URL    = './check_auth.php';      // returns { loggedIn: bool, name: string }
+const AUTH_LOGIN_URL    = './login.php';            // login page
+const AUTH_DOWNLOAD_URL = './download_profile.php'; // protected download endpoint
+
 /* ── UTILS ───────────────────────────────────────────────── */
 const lerp  = (a, b, t) => a + (b - a) * t;
 const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
+
+/* ── SESSION-AWARE DOWNLOAD ──────────────────────────────── */
+/**
+ * Called when user clicks "Download Company Profile".
+ *
+ * Flow:
+ *  1. Ask the server if the user is logged in (check_auth.php).
+ *  2. If YES → navigate to download_profile.php (protected stream).
+ *  3. If NO  → redirect to login.php with current page as redirect target
+ *              and a flag so JS auto-triggers the download on return.
+ */
+window.handleAuthDownload = async function handleAuthDownload(e) {
+  if (e) e.preventDefault();
+
+  try {
+    const res  = await fetch(AUTH_CHECK_URL, { credentials: 'same-origin', cache: 'no-store' });
+    const data = await res.json();
+
+    if (data.loggedIn) {
+      // ── Logged in: serve the file directly ──
+      const link = document.createElement('a');
+      link.href     = AUTH_DOWNLOAD_URL;
+      link.download = 'PHI_Resilience_Company_Profile.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // ── Not logged in: redirect to login with return URL ──
+      const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `${AUTH_LOGIN_URL}?redirect=${returnTo}&msg=login_required`;
+    }
+  } catch (err) {
+    // Network error or PHP not available — fall back to gated modal
+    console.warn('[PHI Auth] Could not reach auth endpoint. Falling back to modal.', err);
+    openDownloadModal();
+  }
+};
+
+/**
+ * On page load, check if we were just redirected back from login
+ * with the ?auto_download=1 flag.  If so, trigger the download automatically.
+ */
+(function checkAutoDownloadOnReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('auto_download') === '1') {
+    // Remove the flag from the URL so a refresh doesn't re-trigger
+    params.delete('auto_download');
+    const cleanUrl = window.location.pathname +
+      (params.toString() ? '?' + params.toString() : '') +
+      window.location.hash;
+    history.replaceState({}, '', cleanUrl);
+
+    // Slight delay so page renders first
+    setTimeout(() => window.handleAuthDownload(), 600);
+  }
+})();
+
+/**
+ * Update the nav/header to show a "Sign Out" link when logged in.
+ * Optionally shows the user's name.
+ */
+(function updateNavForAuthState() {
+  fetch(AUTH_CHECK_URL, { credentials: 'same-origin', cache: 'no-store' })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.loggedIn) return;
+
+      // Add a subtle "Hi, [Name] · Sign out" indicator to the nav
+      const nav = document.querySelector('.nav-links');
+      if (!nav) return;
+
+      const existing = nav.querySelector('.nav-user-info');
+      if (existing) return;
+
+      const userEl = document.createElement('span');
+      userEl.className = 'nav-user-info';
+      userEl.innerHTML = `
+        <span class="nav-user-name">👋 ${escHtml(data.name.split(' ')[0])}</span>
+        <a href="logout.php" class="nav-user-logout" title="Sign out">Sign out</a>
+      `;
+      nav.insertBefore(userEl, nav.querySelector('.nav-cta'));
+    })
+    .catch(() => { /* silently ignore — PHP may not be available in dev */ });
+})();
+
+function escHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 /* ── CUSTOM CURSOR ───────────────────────────────────────── */
 (function initCursor() {
@@ -26,7 +119,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   let dx = -200, dy = -200;
   let isHovered  = false;
   let isClicking = false;
-  let rafId      = null;
 
   document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
   document.addEventListener('mousedown', () => {
@@ -63,7 +155,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     dx = lerp(dx, mx, 0.55); dy = lerp(dy, my, 0.55);
     ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
     dot.style.left  = dx + 'px'; dot.style.top  = dy + 'px';
-    rafId = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
   }
   tick();
 
@@ -172,9 +264,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
   const PT = [
     {
-      sym: 'E',
-      cat: 'Environmental',
-      color: '#0D7377',
+      sym: 'E', cat: 'Environmental', color: '#0D7377',
       items: [
         { code: 'E1', name: 'Energy Efficiency',   desc: 'Adoption of energy-efficient technologies to minimize carbon footprints and reduce operational costs.', sdg: '7, 13' },
         { code: 'E2', name: 'Waste Reduction',      desc: 'Recycling programs and waste diversion strategies promoting circular economy principles.', sdg: '11, 12' },
@@ -184,21 +274,17 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       ]
     },
     {
-      sym: 'C',
-      cat: 'Community',
-      color: '#1A3A5C',
+      sym: 'C', cat: 'Community', color: '#1A3A5C',
       items: [
-        { code: 'C1', name: 'Livelihood Training',    desc: 'Vocational and entrepreneurship training for underserved groups to build sustainable income.', sdg: '1, 8' },
-        { code: 'C2', name: 'Youth Development',      desc: 'Sustainability-themed youth programs fostering leadership, civic engagement, and values formation.', sdg: '4, 10' },
-        { code: 'C3', name: 'Volunteer Programs',     desc: 'Structured employee volunteering frameworks that drive internal culture and community bonds.', sdg: '17' },
-        { code: 'C4', name: 'Safe Learning Spaces',   desc: 'Construction and rehabilitation of child-friendly, disaster-resilient school facilities.', sdg: '4, 11' },
-        { code: 'C5', name: 'Urban Garden-to-Table',  desc: 'Urban agriculture connecting food production, nutrition, and community livelihood.', sdg: '2, 11' },
+        { code: 'C1', name: 'Livelihood Training',   desc: 'Vocational and entrepreneurship training for underserved groups to build sustainable income.', sdg: '1, 8' },
+        { code: 'C2', name: 'Youth Development',     desc: 'Sustainability-themed youth programs fostering leadership, civic engagement, and values formation.', sdg: '4, 10' },
+        { code: 'C3', name: 'Volunteer Programs',    desc: 'Structured employee volunteering frameworks that drive internal culture and community bonds.', sdg: '17' },
+        { code: 'C4', name: 'Safe Learning Spaces',  desc: 'Construction and rehabilitation of child-friendly, disaster-resilient school facilities.', sdg: '4, 11' },
+        { code: 'C5', name: 'Urban Garden-to-Table', desc: 'Urban agriculture connecting food production, nutrition, and community livelihood.', sdg: '2, 11' },
       ]
     },
     {
-      sym: 'G',
-      cat: 'Governance',
-      color: '#7A5A10',
+      sym: 'G', cat: 'Governance', color: '#7A5A10',
       items: [
         { code: 'G1', name: 'ESG Assessment',      desc: 'Structured readiness diagnostics evaluating corporate ESG maturity and identifying priority actions.', sdg: '16, 17' },
         { code: 'G2', name: 'Anti-Corruption',     desc: 'Policy development and training embedding ethical business conduct across all operations.', sdg: '16' },
@@ -208,9 +294,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       ]
     },
     {
-      sym: 'S',
-      cat: 'Social',
-      color: '#2D3A4A',
+      sym: 'S', cat: 'Social', color: '#2D3A4A',
       items: [
         { code: 'S1', name: 'Gender & Inclusion', desc: 'Gender-responsive programming and disability-inclusive policies ensuring equitable access.', sdg: '5, 10' },
         { code: 'S2', name: 'PWD Programs',       desc: 'Employment, accessibility, and skills development for persons with disabilities.', sdg: '10' },
@@ -220,9 +304,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       ]
     },
     {
-      sym: 'R',
-      cat: 'Resilience',
-      color: '#1A4A30',
+      sym: 'R', cat: 'Resilience', color: '#1A4A30',
       items: [
         { code: 'R1', name: 'DRRM Training',        desc: 'Disaster Risk Reduction and Management workshops and simulations for communities and LGUs.', sdg: '11, 13' },
         { code: 'R2', name: 'Business Continuity',  desc: 'Business continuity planning frameworks for operational resilience before and during disasters.', sdg: '8, 11' },
@@ -232,15 +314,13 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       ]
     },
     {
-      sym: 'T',
-      cat: 'Technology',
-      color: '#3A1A5C',
+      sym: 'T', cat: 'Technology', color: '#3A1A5C',
       items: [
-        { code: 'T1', name: 'CSR Dashboard',    desc: 'Real-time digital CSR impact dashboards for program monitoring and stakeholder reporting.', sdg: '9, 17' },
-        { code: 'T2', name: 'AI Analytics',     desc: 'AI-enabled impact measurement, predictive analytics, and program optimization tools.', sdg: '9, 17' },
-        { code: 'T3', name: 'GIS Risk Mapping', desc: 'Geospatial risk and impact visualization for targeting, planning, and reporting.', sdg: '11, 13' },
-        { code: 'T4', name: 'Digital Inclusion',desc: 'Digital literacy, e-commerce training, and technology access programs for marginalized groups.', sdg: '9, 10' },
-        { code: 'T5', name: 'Water Filtration', desc: 'Low-cost community water filtration and eco-sanitation solutions for remote communities.', sdg: '6, 3' },
+        { code: 'T1', name: 'CSR Dashboard',     desc: 'Real-time digital CSR impact dashboards for program monitoring and stakeholder reporting.', sdg: '9, 17' },
+        { code: 'T2', name: 'AI Analytics',      desc: 'AI-enabled impact measurement, predictive analytics, and program optimization tools.', sdg: '9, 17' },
+        { code: 'T3', name: 'GIS Risk Mapping',  desc: 'Geospatial risk and impact visualization for targeting, planning, and reporting.', sdg: '11, 13' },
+        { code: 'T4', name: 'Digital Inclusion', desc: 'Digital literacy, e-commerce training, and technology access programs for marginalized groups.', sdg: '9, 10' },
+        { code: 'T5', name: 'Water Filtration',  desc: 'Low-cost community water filtration and eco-sanitation solutions for remote communities.', sdg: '6, 3' },
       ]
     },
   ];
@@ -249,7 +329,6 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   const tip  = document.getElementById('ptTip');
   if (!grid || !tip) return;
 
-  /* ── Tooltip animation state ── */
   let tipTx = -500, tipTy = -500, tipRx = -500, tipRy = -500;
   let tipRaf = null, tipVisible = false;
 
@@ -276,19 +355,16 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     cancelAnimationFrame(tipRaf);
   }
 
-  /* ── Build columns ── */
   PT.forEach(group => {
     const col = document.createElement('div');
     col.className = 'pt-col';
 
-    /* Header */
     const hdr = document.createElement('div');
     hdr.className = 'pt-header';
     hdr.style.background = group.color;
     hdr.innerHTML = `<span class="pt-sym">${group.sym}</span><span class="pt-cat">${group.cat}</span>`;
     col.appendChild(hdr);
 
-    /* Items wrapper */
     const items = document.createElement('div');
     items.className = 'pt-items';
 
@@ -395,7 +471,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
   if (window.matchMedia('(hover: none)').matches) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const STRENGTH = 0.28;
-  document.querySelectorAll('.btn-gold, .btn-ghost, .nav-links a.nav-cta').forEach(btn => {
+  document.querySelectorAll('.btn-gold, .btn-ghost, .btn-teal, .nav-links a.nav-cta').forEach(btn => {
     let rafId = null, tx = 0, ty = 0, cx = 0, cy = 0;
     btn.addEventListener('mousemove', e => {
       const r = btn.getBoundingClientRect();
@@ -638,6 +714,12 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
 
   const style = document.createElement('style');
   style.textContent = `
+    /* ── Nav user info ── */
+    .nav-user-info { display:flex; align-items:center; gap:.5rem; padding: .3rem .6rem; border-radius:6px; background:rgba(255,255,255,.08); }
+    .nav-user-name { font-size:.78rem; color:rgba(255,255,255,.78); font-weight:500; }
+    .nav-user-logout { font-size:.74rem; color:var(--gold); font-weight:600; text-decoration:none; transition:color .2s; }
+    .nav-user-logout:hover { color:#f0d060; text-decoration:underline; }
+
     #consultationModal { display:none;position:fixed;inset:0;z-index:8000;align-items:center;justify-content:center;opacity:0;transition:opacity .4s cubic-bezier(.4,0,.2,1); }
     #consultationModal.open { display:flex;opacity:1; }
     .modal-overlay { position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer; }
@@ -679,7 +761,7 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
     .checkbox-wrap input:checked~.checkbox-custom{background:var(--teal-bright);border-color:var(--teal-bright);box-shadow:0 0 0 3px rgba(49,167,182,.2)}
     .checkbox-wrap input:checked~.checkbox-custom::after{opacity:1;transform:scale(1)}
     .checkbox-group.has-error .checkbox-custom{border-color:#e07070;box-shadow:0 0 0 3px rgba(224,112,112,.15)}
-    .checkbox-text{line-height:1.5}
+    .checkbox-text{line-height:1.5;color:var(--white)}
     .form-summary-error{background:rgba(224,112,112,.1);border:1px solid rgba(224,112,112,.35);border-left:3px solid #e07070;border-radius:4px;padding:.85rem 1.1rem;font-size:.83rem;color:#f0a0a0;line-height:1.6;animation:errFadeIn .3s ease}
     .submit-btn{width:100%;justify-content:center;margin-top:.25rem;gap:.65rem;min-height:50px}
     .submit-btn:disabled{opacity:.65;cursor:not-allowed;transform:none!important}
@@ -815,6 +897,110 @@ const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
       summaryError.innerHTML = 'Something went wrong. Please email us directly at <a href="mailto:info@mardietorres.com" style="color:var(--teal-bright)">info@mardietorres.com</a>.';
       summaryError.style.display = 'block'; setLoading(false);
     }
+  });
+
+})();
+
+/* ============================================================
+   DOWNLOAD COMPANY PROFILE — GATED MODAL (fallback only)
+   The primary path is handleAuthDownload() above.
+   This modal is shown when PHP is unavailable (e.g. static hosting).
+   ============================================================ */
+(function initDownloadModal() {
+
+  const PDF_URL = './PHI_Resilience_Company_Profile.pdf';
+
+  const modal       = document.getElementById('downloadModal');
+  const dlForm      = document.getElementById('downloadForm');
+  const dlFormView  = document.getElementById('dlFormView');
+  const dlSuccess   = document.getElementById('dlSuccessView');
+  const dlError     = document.getElementById('dlError');
+  const dlSubmitBtn = document.getElementById('dlSubmitBtn');
+  const dlBtnLabel  = document.getElementById('dlBtnLabel');
+  const dlSpinner   = document.getElementById('dlSpinner');
+  const dlDirect    = document.getElementById('dlDirectLink');
+
+  if (!modal) return;
+
+  if (dlDirect) dlDirect.href = PDF_URL;
+
+  window.openDownloadModal = () => {
+    dlFormView.style.display  = '';
+    dlSuccess.style.display   = 'none';
+    dlError.style.display     = 'none';
+    dlForm.reset();
+    setDlLoading(false);
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => requestAnimationFrame(() => { modal.classList.add('open'); }));
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('dlName')?.focus(), 140);
+  };
+
+  window.closeDownloadModal = () => {
+    modal.classList.remove('open');
+    modal.style.opacity = '0';
+    setTimeout(() => { modal.style.display = 'none'; modal.style.opacity = ''; document.body.style.overflow = ''; }, 400);
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') window.closeDownloadModal();
+  });
+
+  function setDlLoading(on) {
+    dlSubmitBtn.disabled    = on;
+    dlBtnLabel.style.display  = on ? 'none' : 'flex';
+    dlSpinner.style.display   = on ? 'flex'  : 'none';
+  }
+
+  function validateDlForm() {
+    const name    = document.getElementById('dlName').value.trim();
+    const org     = document.getElementById('dlOrg').value.trim();
+    const email   = document.getElementById('dlEmail').value.trim();
+    const consent = document.getElementById('dlConsent').checked;
+    if (!name)    return 'Please enter your full name.';
+    if (name.length < 2) return 'Name must be at least 2 characters.';
+    if (!org)     return 'Please enter your organization name.';
+    if (!email)   return 'Please enter your email address.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return 'Please enter a valid email address.';
+    if (!consent) return 'Please agree to receive communications before downloading.';
+    return null;
+  }
+
+  function triggerDownload(url, filename) {
+    const a = document.createElement('a');
+    a.href = url; a.download = filename || 'PHI_Resilience_Company_Profile.pdf';
+    a.style.display = 'none'; document.body.appendChild(a); a.click();
+    setTimeout(() => document.body.removeChild(a), 500);
+  }
+
+  dlForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    dlError.style.display = 'none';
+    const errorMsg = validateDlForm();
+    if (errorMsg) {
+      dlError.textContent = errorMsg; dlError.style.display = 'block';
+      dlError.style.animation = 'none'; void dlError.offsetWidth; dlError.style.animation = '';
+      return;
+    }
+    setDlLoading(true);
+    try {
+      await fetch('./log_download.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('dlName').value.trim(),
+          org:  document.getElementById('dlOrg').value.trim(),
+          email:document.getElementById('dlEmail').value.trim(),
+          role: document.getElementById('dlRole').value || '',
+          type: 'company_profile_download', ts: new Date().toISOString(),
+        }),
+      });
+    } catch (_) { /* non-blocking */ }
+    setTimeout(() => {
+      setDlLoading(false);
+      triggerDownload(PDF_URL, 'PHI_Resilience_Company_Profile.pdf');
+      dlFormView.style.display = 'none';
+      dlSuccess.style.display  = 'block';
+    }, 900);
   });
 
 })();

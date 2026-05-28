@@ -1,0 +1,5 @@
+# Block direct access to the PDF
+<Files "PHI_Resilience_Company_Profile.pdf">
+    Order Allow,Deny
+    Deny from all
+</Files>

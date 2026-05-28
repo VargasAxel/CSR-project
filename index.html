@@ -27,7 +27,6 @@
             <a href="#about">About</a>
             <a href="#services">Services</a>
             <a href="periodic.html">Framework</a>
-
             <a href="#approach">Approach</a>
             <a href="#leadership">Leadership</a>
             <a href="#" class="nav-cta" onclick="event.preventDefault(); openConsultationModal();">Get In Touch</a>
@@ -40,7 +39,6 @@
         <a href="#about" onclick="closeM()">About</a>
         <a href="#services" onclick="closeM()">Services</a>
         <a href="periodic.html" onclick="closeM()">Our Framework</a>
-
         <a href="#approach" onclick="closeM()">Approach</a>
         <a href="#partnership" onclick="closeM()">Partnership Model</a>
         <a href="#leadership" onclick="closeM()">Leadership</a>
@@ -229,8 +227,6 @@
             </div>
         </div>
     </section>
-
-
 
     <!-- FOCUS AREAS -->
     <section id="focus">
@@ -699,10 +695,17 @@
                     <a href="https://www.phiresilience.com/" target="_blank">www.phiresilience.com</a>
                 </div>
             </div>
+
+            <!-- ── CONTACT BUTTONS (3 buttons) ── -->
             <div class="contact-btns reveal delay-4">
                 <a href="#" class="btn btn-gold" onclick="event.preventDefault(); openConsultationModal();">Schedule a Consultation</a>
+                <a href="#" class="btn btn-teal" onclick="handleAuthDownload(event);">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download Company Profile
+                </a>
                 <a href="#" class="btn btn-ghost">Request a CSR Assessment</a>
             </div>
+
             <div class="contact-chips reveal delay-5">
                 <span class="c-chip">CSR Strategy</span>
                 <span class="c-chip">Resilience Planning</span>
@@ -727,6 +730,109 @@
             <a href="#contact">Contact</a>
         </div>
     </footer>
+
+    <!-- ══════════════════════════════════════════════════════
+         DOWNLOAD COMPANY PROFILE — GATED MODAL
+         ══════════════════════════════════════════════════════ -->
+    <div id="downloadModal">
+        <div class="modal-overlay" onclick="closeDownloadModal()"></div>
+        <div class="modal-content dl-modal-content">
+            <button class="modal-close" onclick="closeDownloadModal()" aria-label="Close modal">&#x2715;</button>
+
+            <!-- FORM VIEW -->
+            <div id="dlFormView">
+                <div class="dl-modal-header">
+                    <div class="dl-icon-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </div>
+                    <h2 class="dl-modal-title">Company Profile</h2>
+                    <p class="dl-modal-sub">Sign in with your details to instantly access and download our full company profile.</p>
+                    <div class="dl-badge-row">
+                        <span class="dl-badge">📄 PDF · ~2.4 MB</span>
+                        <span class="dl-badge">🔒 Secure Download</span>
+                        <span class="dl-badge">✦ Free Access</span>
+                    </div>
+                </div>
+
+                <form id="downloadForm" class="dl-form" novalidate autocomplete="on">
+                    <div class="dl-form-row">
+                        <div class="form-group">
+                            <label for="dlName">Full Name <span class="req-star">*</span></label>
+                            <input type="text" id="dlName" name="dlName" placeholder="Your full name" autocomplete="name" maxlength="80" />
+                        </div>
+                        <div class="form-group">
+                            <label for="dlOrg">Organization <span class="req-star">*</span></label>
+                            <input type="text" id="dlOrg" name="dlOrg" placeholder="Company or organization" autocomplete="organization" maxlength="100" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="dlEmail">Email Address <span class="req-star">*</span></label>
+                        <input type="email" id="dlEmail" name="dlEmail" placeholder="you@company.com" autocomplete="email" />
+                    </div>
+                    <div class="form-group">
+                        <label for="dlRole">Your Role <span class="dl-optional-tag">Optional</span></label>
+                        <select id="dlRole" name="dlRole">
+                            <option value="" disabled selected>Select your role…</option>
+                            <option value="Executive / C-Suite">Executive / C-Suite</option>
+                            <option value="CSR / Sustainability Manager">CSR / Sustainability Manager</option>
+                            <option value="ESG / Compliance Officer">ESG / Compliance Officer</option>
+                            <option value="NGO / Foundation Staff">NGO / Foundation Staff</option>
+                            <option value="Government / LGU Officer">Government / LGU Officer</option>
+                            <option value="Academic / Researcher">Academic / Researcher</option>
+                            <option value="Consultant / Advisor">Consultant / Advisor</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="dl-consent-row">
+                        <label class="dl-checkbox-label" for="dlConsent">
+                            <span class="dl-checkbox-wrap">
+                                <input type="checkbox" id="dlConsent" name="dlConsent" />
+                                <span class="dl-checkbox-custom"></span>
+                            </span>
+                            <span class="dl-checkbox-text">I agree to receive communications from PHI Resilience. <span class="req-star">*</span></span>
+                        </label>
+                    </div>
+                    <div id="dlError" class="dl-error-box" style="display:none;"></div>
+                    <button type="submit" class="btn btn-gold submit-btn" id="dlSubmitBtn">
+                        <span id="dlBtnLabel" style="display:flex;align-items:center;gap:.55rem;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Access &amp; Download
+                        </span>
+                        <span id="dlSpinner" style="display:none;align-items:center;gap:.55rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <circle cx="12" cy="12" r="10" stroke-opacity=".25"/>
+                                <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".8s" repeatCount="indefinite"/>
+                                </path>
+                            </svg>
+                            Processing…
+                        </span>
+                    </button>
+                    <p class="form-note" style="margin-top:.75rem;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Your information is private and never shared with third parties.
+                    </p>
+                </form>
+            </div>
+
+            <!-- SUCCESS VIEW -->
+            <div id="dlSuccessView" style="display:none;">
+                <div class="dl-success-inner">
+                    <div class="dl-success-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <h3 class="dl-success-title">Download Ready</h3>
+                    <p class="dl-success-sub">Thank you! Your download should start automatically. Use the button below if it didn't.</p>
+                    <a id="dlDirectLink" href="PHI_Resilience_Company_Profile.pdf" class="btn btn-gold" style="width:100%;justify-content:center;gap:.6rem;" download>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download Again
+                    </a>
+                    <button class="btn btn-outline-teal" onclick="closeDownloadModal()" style="width:100%;justify-content:center;margin-top:.6rem;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END DOWNLOAD MODAL -->
 
     <script src="script.js"></script>
 </body>
